@@ -20,8 +20,9 @@ jobs:
       - name: Download Toolchain (ZyC Clang)
         run: |
           mkdir -p clang
-          wget -q https://github.com/ZyCromerZ/Clang/releases/download/18.0.0-20240212-release/Clang-18.0.0-20240212.tar.gz
-          tar -xzf Clang-18.0.0-20240212.tar.gz -C clang
+          CLANG_URL=$(curl -s https://raw.githubusercontent.com/ZyCromerZ/Clang/main/Clang-main-lastbuild.txt
+          wget -q "$CLANG_URL" -O clang.tar.gz
+          tar -xzf clang.tar.gz -C clang
 
       - name: Compile Kernel
         run: |
