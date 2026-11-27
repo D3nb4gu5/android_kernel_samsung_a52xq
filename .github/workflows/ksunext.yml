@@ -12,17 +12,10 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install Dependencies
+      - name: Install Dependencies & Toolchain
         run: |
           sudo apt-get update
-          sudo apt-get install -y bc bison build-essential ccache curl flex git libssl-dev libelf-dev python3 zip wget
-
-      - name: Download Toolchain (Clang)
-        run: |
-          mkdir -p toolchain/clang
-          cd toolchain/clang
-          wget -q https://googlesource.com -O clang.tar.gz
-          tar -xzf clang.tar.gz && rm clang.tar.gz
+          sudo apt-get install -y bc bison build-essential ccache curl flex git libssl-dev libelf-dev python3 zip clang lld llvm gcc-aarch64-linux-gnu gcc-arm-linux-gnueabi
 
       - name: Bersihkan SukiSU Lama & Pasang KernelSU-Next
         run: |
@@ -42,7 +35,6 @@ jobs:
         run: |
           export ARCH=arm64
           export SUBARCH=arm64
-          export PATH="$PWD/toolchain/clang/bin:$PATH"
           make O=out ARCH=arm64 a52xq_eur_open_defconfig
           make -j$(nproc) O=out ARCH=arm64 CC=clang LLVM=1 LLVM_IAS=1 CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_ARM32=arm-linux-gnueabi- Image.gz-dtb dtbo.img
 
