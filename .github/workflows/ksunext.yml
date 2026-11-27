@@ -1,0 +1,61 @@
+name: Build KernelSU-Next A526B
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout Kernel Source
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y bc bison build-essential ccache curl flex git libssl-dev libelf-dev python3 zip
+
+      - name: Download Toolchain (Clang 11)
+        run: |
+          mkdir -p toolchain
+          git clone --depth=1 https://github.com toolchain/clang
+          git clone --depth=1 https://github.com toolchain/gcc64
+          git clone --depth=1 https://github.com toolchain/gcc32
+
+      - name: Bersihkan SukiSU Lama & Pasang KernelSU-Next
+        run: |
+          rm -rf drivers/kernelsu KernelSU
+          sed -i '/kernelsu/d' drivers/Kconfig drivers/Makefile
+          curl -LSs "https://githubusercontent.com" | bash -s legacy
+
+      - name: Konfigurasi Defconfig untuk One UI 8
+        run: |
+          DEFCONFIG="arch/arm64/configs/a52xq_eur_open_defconfig"
+          sed -i '/CONFIG_KSU/d' $DEFCONFIG
+          echo "CONFIG_KSU=y" >> $DEFCONFIG
+          echo "CONFIG_KSU_KPROBE_HOOKS=n" >> $DEFCONFIG
+          echo "CONFIG_OVERLAY_FS=y" >> $DEFCONFIG
+
+      - name: Compile Kernel
+        run: |
+          export ARCH=arm64
+          export SUBARCH=arm64
+          export PATH="$PWD/toolchain/clang/bin:$PWD/toolchain/gcc64/bin:$PWD/toolchain/gcc32/bin:$PATH"
+          make O=out ARCH=arm64 a52xq_eur_open_defconfig
+          make -j$(nproc) O=out ARCH=arm64 CC=clang CLANG_TRIPLE=aarch64-linux-gnu- CROSS_COMPILE=aarch64-linux-android- CROSS_COMPILE_ARM32=arm-linux-androideabi- Image.gz-dtb dtbo.img
+
+      - name: Package dengan AnyKernel3
+        run: |
+          git clone --depth=1 https://github.com AnyKernel3
+          cp out/arch/arm64/boot/Image.gz-dtb AnyKernel3/
+          cp out/arch/arm64/boot/dtbo.img AnyKernel3/ || true
+          cd AnyKernel3
+          zip -r9 ../touchGrass-KSUNext-A526B.zip * -x .git README.md *placeholder
+
+      - name: Upload Hasil Build
+        uses: actions/upload-artifact@v4
+        with:
+          name: touchGrass-KSUNext-A526B
+          path: touchGrass-KSUNext-A526B.zip
