@@ -10,23 +10,26 @@ jobs:
       - name: Checkout Kernel Source
         uses: actions/checkout@v4
         with:
-          depth: 1
+          fetch-depth: 1
 
       - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y bc bison build-essential ccache curl flex git libelf-dev libncurses5-dev libssl-dev python3 unzip zip
+          sudo apt-get install -y bc bison build-essential ccache curl flex git libelf-dev libncurses5-dev libssl-dev python3 unzip zip wget
 
-      - name: Download Toolchain (Proton Clang)
+      - name: Download Toolchain (ZyC Clang)
         run: |
-          git clone --depth=1 https://github.com/kdrag0n/proton-clang.git clang
+          mkdir -p clang
+          wget -q https://github.com/ZyCromerZ/Clang/releases/download/18.0.0-20240212-release/Clang-18.0.0-20240212.tar.gz
+          tar -xzf Clang-18.0.0-20240212.tar.gz -C clang
+
       - name: Compile Kernel
         run: |
           export ARCH=arm64
           export SUBARCH=arm64
           export PATH="$PWD/clang/bin:$PATH"
           make O=out ARCH=arm64 a52xq_defconfig
-          make -j$(nproc) O=out ARCH=arm64 CC=clang CLANG_TRIPLE=aarch64-linux-gnu- CROSS_COMPILE=aarch64-linux-gnu-
+          make -j$(nproc) O=out ARCH=arm64 LLVM=1 LLVM_IAS=1 CC=clang CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_ARM32=arm-linux-gnueabi-
 
       - name: Package with AnyKernel3
         run: |
