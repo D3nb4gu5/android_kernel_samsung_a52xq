@@ -19,23 +19,26 @@ jobs:
 
       - name: Bersihkan SukiSU Lama & Pasang KernelSU-Next
         run: |
-          rm -rf drivers/kernelsu KernelSU
+          rm -rf drivers/kernelsu KernelSU KernelSU-Next
           sed -i '/kernelsu/d' drivers/Kconfig drivers/Makefile
-          curl -LSs "https://githubusercontent.com" | bash -s legacy
+          git clone --depth=1 -b next https://github.com
+          bash KernelSU-Next/kernel/setup.sh legacy
 
-      - name: Konfigurasi Defconfig untuk One UI 8
+      - name: Konfigurasi Defconfig Otomatis
         run: |
-          DEFCONFIG="arch/arm64/configs/a52xq_eur_open_defconfig"
-          sed -i '/CONFIG_KSU/d' $DEFCONFIG
-          echo "CONFIG_KSU=y" >> $DEFCONFIG
-          echo "CONFIG_KSU_KPROBE_HOOKS=n" >> $DEFCONFIG
-          echo "CONFIG_OVERLAY_FS=y" >> $DEFCONFIG
+          DEFCONFIG_PATH=$(find arch/arm64/configs -name "*a52xq*defconfig" | head -n 1)
+          echo "Menggunakan defconfig: $DEFCONFIG_PATH"
+          sed -i '/CONFIG_KSU/d' "$DEFCONFIG_PATH"
+          echo "CONFIG_KSU=y" >> "$DEFCONFIG_PATH"
+          echo "CONFIG_KSU_KPROBE_HOOKS=n" >> "$DEFCONFIG_PATH"
+          echo "CONFIG_OVERLAY_FS=y" >> "$DEFCONFIG_PATH"
+          echo "DEFCONFIG_NAME=$(basename "$DEFCONFIG_PATH")" >> $GITHUB_ENV
 
       - name: Compile Kernel
         run: |
           export ARCH=arm64
           export SUBARCH=arm64
-          make O=out ARCH=arm64 a52xq_eur_open_defconfig
+          make O=out ARCH=arm64 $DEFCONFIG_NAME
           make -j$(nproc) O=out ARCH=arm64 CC=clang LLVM=1 LLVM_IAS=1 CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_ARM32=arm-linux-gnueabi- Image.gz-dtb dtbo.img
 
       - name: Package dengan AnyKernel3
