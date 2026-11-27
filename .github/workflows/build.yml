@@ -20,7 +20,7 @@ jobs:
       - name: Download Toolchain (ZyC Clang)
         run: |
           mkdir -p clang
-          CLANG_URL=$(curl -s https://raw.githubusercontent.com/ZyCromerZ/Clang/main/Clang-main-lastbuild.txt
+          CLANG_URL=$(curl -s https://raw.githubusercontent.com/ZyCromerZ/Clang/main/Clang-main-lastbuild.txt)
           wget -q "$CLANG_URL" -O clang.tar.gz
           tar -xzf clang.tar.gz -C clang
 
