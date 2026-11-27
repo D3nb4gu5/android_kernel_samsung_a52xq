@@ -21,7 +21,8 @@ jobs:
         run: |
           rm -rf drivers/kernelsu KernelSU KernelSU-Next
           sed -i '/kernelsu/d' drivers/Kconfig drivers/Makefile
-          git clone --depth=1 -b next https://github.com
+          HOST="github.com"
+          git clone --depth=1 -b next "https://${HOST}/KernelSU-Next/KernelSU-Next.git" KernelSU-Next
           bash KernelSU-Next/kernel/setup.sh legacy
 
       - name: Konfigurasi Defconfig Otomatis
@@ -43,7 +44,8 @@ jobs:
 
       - name: Package dengan AnyKernel3
         run: |
-          git clone --depth=1 https://github.com AnyKernel3
+          HOST="github.com"
+          git clone --depth=1 "https://${HOST}/itsaschoolbus-stuff/AnyKernel3.git" AnyKernel3
           cp out/arch/arm64/boot/Image.gz-dtb AnyKernel3/
           cp out/arch/arm64/boot/dtbo.img AnyKernel3/ || true
           cd AnyKernel3
